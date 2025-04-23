@@ -1,42 +1,74 @@
 <!DOCTYPE html>
 <html>
-<head>
-  <meta charset="utf-8">
-  <title>카카오 지도</title>
-  <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=8fd6d41454e6fa45741e0496262031a6&libraries=services&autoload=false"></script>
-</head>
-<body style="margin:0;padding:0;">
-
-  <div id="map" style="width:100%;height:90vh;"></div>
-
-  <!-- Flutter로 메시지 보내는 버튼 -->
-  <button onclick="sendMessageToFlutter()" style="width:100%;height:10vh;font-size:20px;">
-    Flutter로 메시지 보내기
-  </button>
-
-  <script>
-    kakao.maps.load(() => {
-      try {
-        var container = document.getElementById('map');
-        var options = {
-          center: new kakao.maps.LatLng(37.5665, 126.9780),
-          level: 3
-        };
-        var map = new kakao.maps.Map(container, options);
-      } catch (e) {
-        alert("지도 로딩 오류: " + e.message);
+  <head>
+    <meta charset="utf-8" />
+    <title>정류장 지도</title>
+    <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=8fd6d41454e6fa45741e0496262031a6"></script>
+    <style>
+      .custom-infowindow {
+        padding: 12px 16px;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        font-size: 24px;
+        font-weight: bold;
+        color: #333;
+        display: flex;
+        align-items: center;
+        gap: 10px;
       }
-    });
-
-    // ✅ Flutter로 메시지 보내는 함수
-    function sendMessageToFlutter() {
-      if (window.KakaoChannel) {
-        KakaoChannel.postMessage("Flutter야 안녕! 나는 JS야 👋");
-      } else {
-        alert("Flutter WebView 환경이 아니야 😭");
+      .custom-infowindow-icon {
+        font-size: 28px;
+        color: #6a4caf;
       }
-    }
-  </script>
-</body>
+    </style>
+  </head>
+  <body>
+    <div id="map" style="width:100%;height:100vh;"></div>
+    <script>
+      const container = document.getElementById('map');
+      const options = {
+        center: new kakao.maps.LatLng(37.5665, 126.9780),
+        level: 6
+      };
+      const map = new kakao.maps.Map(container, options);
+
+      const hubs = [
+        { name: "강남역", lat: 37.4979, lng: 127.0276 },
+        { name: "홍대입구역", lat: 37.5563, lng: 126.9239 },
+        { name: "잠실역", lat: 37.5133, lng: 127.1002 },
+      ];
+
+      hubs.forEach(hub => {
+        // 🔸 마커 아이콘 커스터마이징
+        const markerImage = new kakao.maps.MarkerImage(
+          "https://cdn-icons-png.flaticon.com/512/684/684908.png",
+          new kakao.maps.Size(48, 48) // 마커 크기 크게
+        );
+
+        const marker = new kakao.maps.Marker({
+          map,
+          position: new kakao.maps.LatLng(hub.lat, hub.lng),
+          image: markerImage
+        });
+
+        // 🔸 인포윈도우 커스터마이징
+        const infowindow = new kakao.maps.InfoWindow({
+          content: `
+            <div class="custom-infowindow">
+              <span class="custom-infowindow-icon">🚏</span>
+              ${hub.name}
+            </div>
+          `
+        });
+
+        kakao.maps.event.addListener(marker, 'click', function () {
+          infowindow.open(map, marker);
+          window.flutter_inappwebview.callHandler('hubClicked', hub.lat, hub.lng, hub.name);
+        });
+      });
+    </script>
+  </body>
 </html>
+
 
